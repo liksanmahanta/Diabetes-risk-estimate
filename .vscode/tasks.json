@@ -1,0 +1,62 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run focused Python tests",
+			"type": "shell",
+			"command": "C:/Users/Liksan Mahanta/AppData/Local/Microsoft/WindowsApps/python3.13.exe",
+			"args": [
+				"-m",
+				"pytest",
+				"-q"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Train diabetes models",
+			"type": "shell",
+			"command": "C:/Users/Liksan Mahanta/AppData/Local/Microsoft/WindowsApps/python3.13.exe",
+			"args": [
+				"train.py"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Inspect UCI dataset columns",
+			"type": "shell",
+			"command": "C:/Users/Liksan Mahanta/AppData/Local/Microsoft/WindowsApps/python3.13.exe",
+			"args": [
+				"-c",
+				"from ucimlrepo import fetch_ucirepo; d=fetch_ucirepo(id=17); print('FEATURES', d.data.features.shape, list(d.data.features.columns)); print(d.data.features.head(2).to_string()); print('TARGET', d.data.targets.shape, list(d.data.targets.columns)); print(d.data.targets.head(3).to_string())"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspect UCI columns retry",
+			"type": "shell",
+			"command": "C:/Users/Liksan Mahanta/AppData/Local/Microsoft/WindowsApps/python3.13.exe",
+			"args": [
+				"-c",
+				"from ucimlrepo import fetch_ucirepo; d=fetch_ucirepo(id=17); print(d.data.features.shape); print(list(d.data.features.columns)); print(d.data.features.head(2)); print(d.data.targets.shape); print(list(d.data.targets.columns)); print(d.data.targets.head(3))"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run Flask app",
+			"type": "shell",
+			"command": "C:/Users/Liksan Mahanta/AppData/Local/Microsoft/WindowsApps/python3.13.exe",
+			"args": [
+				"app.py"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}

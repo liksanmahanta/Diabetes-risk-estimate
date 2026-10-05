@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f4f7f4">
+    <title>Diabetes Risk Estimate</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="wordmark" href="/" aria-label="Pulsepoint home">
+        <span class="wordmark-mark" aria-hidden="true">P</span>
+        <span>pulsepoint<span class="wordmark-dot">.</span></span>
+      </a>
+      <div class="model-status" id="model-status" role="status">
+        <span class="status-light" aria-hidden="true"></span>
+        <span id="model-status-text">Checking model</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">SCREENING RESEARCH / MODEL 01</p>
+          <h1 id="page-title">Diabetes risk<br>estimate<span class="title-mark">.</span></h1>
+          <p class="intro-copy">Explore how a set of health measurements relates to the model's estimate. This is a research prototype, not a diagnosis.</p>
+        </div>
+        <div class="intro-aside">
+          <span class="aside-index">01 <span>/</span> 03</span>
+          <span class="aside-rule" aria-hidden="true"></span>
+          <span class="aside-label">Patient measurements<br>and model response</span>
+        </div>
+      </section>
+
+      <section class="workspace" aria-label="Risk estimate workspace">
+        <section class="measurement-panel" aria-labelledby="measurements-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">PATIENT PROFILE</p>
+              <h2 id="measurements-title">Measurements</h2>
+            </div>
+            <span class="required-note">* Required</span>
+          </div>
+          <form id="prediction-form">
+            <div class="field-grid">
+              <label class="field">
+                <span>Glucose <b>*</b></span>
+                <span class="input-wrap"><input name="Glucose" type="number" min="20" max="300" step="any" placeholder="e.g. 110" required><small>mg/dL</small></span>
+              </label>
+              <label class="field">
+                <span>Blood pressure <b>*</b></span>
+                <span class="input-wrap"><input name="BloodPressure" type="number" min="20" max="150" step="any" placeholder="e.g. 72" required><small>mmHg</small></span>
+              </label>
+              <label class="field">
+                <span>BMI <b>*</b></span>
+                <span class="input-wrap"><input name="BMI" type="number" min="10" max="80" step="any" placeholder="e.g. 28.5" required><small>kg/m²</small></span>
+              </label>
+              <label class="field">
+                <span>Age <b>*</b></span>
+                <span class="input-wrap"><input name="Age" type="number" min="18" max="100" step="1" placeholder="e.g. 42" required><small>years</small></span>
+              </label>
+              <label class="field">
+                <span>Pregnancies <b>*</b></span>
+                <span class="input-wrap"><input name="Pregnancies" type="number" min="0" max="20" step="1" placeholder="e.g. 2" required><small>count</small></span>
+              </label>
+              <label class="field">
+                <span>Insulin</span>
+                <span class="input-wrap"><input name="Insulin" type="number" min="0" max="900" step="any" placeholder="Leave blank if unknown"><small>mu U/mL</small></span>
+              </label>
+              <label class="field">
+                <span>Skin thickness</span>
+                <span class="input-wrap"><input name="SkinThickness" type="number" min="0" max="100" step="any" placeholder="Leave blank if unknown"><small>mm</small></span>
+              </label>
+              <label class="field">
+                <span>Diabetes pedigree</span>
+                <span class="input-wrap"><input name="DiabetesPedigreeFunction" type="number" min="0" max="3" step="any" placeholder="Leave blank if unknown"><small>index</small></span>
+              </label>
+            </div>
+            <p class="form-hint">Use measurements obtained by a qualified health professional. Blank optional fields are imputed from training data.</p>
+            <div class="form-actions">
+              <button class="submit-button" type="submit" id="submit-button" disabled>
+                <span>Estimate risk</span><span aria-hidden="true">&#8594;</span>
+              </button>
+              <span class="form-error" id="form-error" role="alert"></span>
+            </div>
+          </form>
+        </section>
+
+        <section class="result-panel" aria-labelledby="result-title" aria-live="polite">
+          <div class="section-heading result-heading">
+            <div>
+              <p class="eyebrow">MODEL OUTPUT</p>
+              <h2 id="result-title">Estimate</h2>
+            </div>
+            <span class="model-chip" id="selected-model-chip">Awaiting model</span>
+          </div>
+          <div class="result-empty" id="result-empty">
+            <div class="empty-graphic" aria-hidden="true"><span></span><span></span><span></span><i></i></div>
+            <p>Enter measurements to see a model estimate and how the inputs affect it.</p>
+          </div>
+          <div class="result-content" id="result-content" hidden>
+            <div class="score-line">
+              <div><span class="score-label">Positive-class probability</span><strong class="score-value" id="score-value">--%</strong></div>
+              <span class="classification" id="classification">--</span>
+            </div>
+            <div class="score-track" role="img" aria-label="Estimated probability" id="score-track"><span id="score-fill"></span></div>
+            <div class="scale-labels"><span>0%</span><span>50% model threshold</span><span>100%</span></div>
+            <p class="result-caveat" id="result-caveat"></p>
+            <div class="local-explanation">
+              <div class="subheading-row"><h3>Input sensitivity</h3><span>vs. training median</span></div>
+              <p class="explanation-note">Change in model estimate when one input is replaced with its training-set median. This is not a causal effect.</p>
+              <ul class="sensitivity-list" id="sensitivity-list"></ul>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="analysis-section" aria-label="Model analysis">
+        <div class="analysis-column">
+          <div class="section-heading compact-heading">
+            <div><p class="eyebrow">HELD-OUT EVALUATION</p><h2>Model comparison</h2></div>
+            <span class="analysis-caption" id="evaluation-caption">Metrics unavailable</span>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>Algorithm</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1</th></tr></thead>
+              <tbody id="metrics-body"><tr><td colspan="5" class="table-empty">Train the model to load evaluation metrics.</td></tr></tbody>
+            </table>
+          </div>
+          <p class="table-note">One stratified holdout split; metrics are estimates and may vary with new data.</p>
+        </div>
+        <div class="analysis-column importance-column">
+          <div class="section-heading compact-heading">
+            <div><p class="eyebrow">GLOBAL MODEL SIGNALS</p><h2>Feature influence</h2></div>
+            <span class="analysis-caption">Permutation / F1</span>
+          </div>
+          <p class="importance-intro">Average change in holdout F1 when each feature is shuffled. Larger values indicate greater model reliance, not medical causation.</p>
+          <ul class="importance-list" id="importance-list"><li class="table-empty">Train the model to load feature influence.</li></ul>
+        </div>
+      </section>
+
+      <aside class="safety-note" aria-label="Important limitations">
+        <span class="safety-mark" aria-hidden="true">!</span>
+        <div>
+          <strong>Research prototype, not for clinical decisions.</strong>
+          <p>Trained on the UCI Pima Indians Diabetes dataset, whose original cohort was women of Pima heritage. Performance and probability estimates are not validated for other populations or real-world care. A clinician should interpret health measurements and any screening result.</p>
+        </div>
+      </aside>
+    </main>
+    <footer><span>Pulsepoint / ML screening prototype</span><span>UCI dataset / educational use</span></footer>
+  </body>
+</html>
