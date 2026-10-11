@@ -2,3 +2,5 @@
 __pycache__/
 .pytest_cache/
 artifacts/
+.patient_owner.json
+patient_records.db

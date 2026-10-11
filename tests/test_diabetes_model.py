@@ -60,6 +60,8 @@ def test_prediction_endpoint_returns_probability_and_sensitivity(monkeypatch):
         },
     )
     payload = {
+        "PatientName": "Test Patient",
+        "Gender": "Female",
         "Pregnancies": 2,
         "Glucose": 110,
         "BloodPressure": 72,
@@ -76,12 +78,15 @@ def test_prediction_endpoint_returns_probability_and_sensitivity(monkeypatch):
     result = response.get_json()
     assert result["probability"] == 0.65
     assert result["prediction"] == 1
+    assert result["gender"] == "female"
     assert len(result["explanation"]) == len(FEATURES)
     assert result["missing_measurements"] == ["SkinThickness", "Insulin"]
 
 
 def test_prediction_endpoint_rejects_boolean_measurements():
     payload = {
+        "PatientName": "Test Patient",
+        "Gender": "female",
         "Pregnancies": 2,
         "Glucose": 110,
         "BloodPressure": 72,
@@ -96,3 +101,17 @@ def test_prediction_endpoint_rejects_boolean_measurements():
 
     assert response.status_code == 400
     assert response.get_json() == {"error": "Age must be a number."}
+
+
+def test_prediction_endpoint_requires_supported_gender():
+    payload = {
+        "PatientName": "Test Patient",
+        "Gender": "other",
+    }
+    response = web_app.app.test_client().post(
+        "/api/predict",
+        json=payload,
+    )
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "Gender must be either male or female."}

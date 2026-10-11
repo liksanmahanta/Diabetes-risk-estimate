@@ -20,7 +20,7 @@ Run the focused tests with `python -m pytest -q`.
 
 The training script fetches the 768-row Pima table from the public CSV mirror at `jbrownlee/Datasets` and validates its eight-feature schema and binary target before training. Zero values for glucose, blood pressure, skin thickness, insulin, and BMI are treated as missing, then median-imputed inside each model pipeline. Data is split once with stratification (80% train, 20% holdout; seed 42). The model is selected by mean F1 across five folds within the training partition; the untouched holdout reports accuracy, precision, recall, and F1 for all four algorithms and supplies permutation importance.
 
-The web form accepts blank insulin, skin thickness, and diabetes-pedigree measurements and imputes them from the training partition. The selected model's output is a positive-class probability. The default 0.50 threshold is an engineering default, not a clinically selected operating point. Sensitivity values are model comparisons, not causal effects.
+The web form accepts male or female as patient context and allows blank insulin, skin thickness, and diabetes-pedigree measurements, which are imputed from the training partition. Gender is validated and returned with the prediction but is not a model feature. The selected model's output is a positive-class probability. The default 0.50 threshold is an engineering default, not a clinically selected operating point. Sensitivity values are model comparisons, not causal effects.
 
 ## Important limitations
 

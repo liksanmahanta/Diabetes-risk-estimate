@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ 'Set owner password' if setup_mode else 'Owner sign in' }} - Pulsepoint</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+      .owner-card { max-width: 430px; margin: 12vh auto; padding: 32px; background: #fff; border: 1px solid var(--line); }
+      .owner-card h1 { font-size: 28px; }
+      .owner-card p { color: var(--muted); font-size: 13px; }
+      .owner-card label { display: block; margin: 18px 0 7px; font-size: 12px; font-weight: 600; }
+      .owner-card input { box-sizing: border-box; width: 100%; padding: 12px; border: 1px solid var(--line); font: 14px var(--font-body); }
+      .owner-card .submit-button { margin-top: 18px; }
+      .owner-error { color: var(--coral) !important; }
+    </style>
+  </head>
+  <body>
+    <header class="topbar"><a class="wordmark" href="/owner"><span class="wordmark-mark">P</span><span>pulsepoint<span class="wordmark-dot">.</span></span></a></header>
+    <main>
+      <section class="owner-card">
+        <p class="eyebrow">PRIVATE PATIENT RECORDS</p>
+        <h1>{{ 'Create owner password' if setup_mode else 'Owner sign in' }}</h1>
+        <p>{{ 'Set a password to restrict access to this app and its patient records. Keep it private.' if setup_mode else 'Sign in with the owner password to view and manage patient records.' }}</p>
+        {% if error %}<p class="owner-error" role="alert">{{ error }}</p>{% endif %}
+        <form method="post" action="{{ url_for('owner_access') }}">
+          <label for="password">{{ 'Owner password (12+ characters)' if setup_mode else 'Owner password' }}</label>
+          <input id="password" name="password" type="password" minlength="{{ 12 if setup_mode else 1 }}" autocomplete="{{ 'new-password' if setup_mode else 'current-password' }}" required autofocus>
+          {% if setup_mode %}
+            <label for="confirm-password">Confirm password</label>
+            <input id="confirm-password" name="confirm_password" type="password" minlength="12" autocomplete="new-password" required>
+          {% endif %}
+          <button class="submit-button" type="submit"><span>{{ 'Set password' if setup_mode else 'Sign in' }}</span><span aria-hidden="true">&#8594;</span></button>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>

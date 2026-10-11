@@ -21,6 +21,11 @@
         <span class="status-light" aria-hidden="true"></span>
         <span id="model-status-text">Checking model</span>
       </div>
+      {% if session.get('owner_authenticated') %}
+        <form action="{{ url_for('owner_logout') }}" method="post"><button class="refresh-button" type="submit">Sign out</button></form>
+      {% else %}
+        <a class="refresh-button" href="{{ url_for('owner_access') }}">Owner sign in</a>
+      {% endif %}
     </header>
 
     <main>
@@ -49,6 +54,10 @@
           <form id="prediction-form">
             <div class="field-grid">
               <label class="field">
+                <span>Patient name <b>*</b></span>
+                <span class="input-wrap"><input name="PatientName" type="text" maxlength="80" placeholder="e.g. John Smith" required></span>
+              </label>
+              <label class="field">
                 <span>Glucose <b>*</b></span>
                 <span class="input-wrap"><input name="Glucose" type="number" min="20" max="300" step="any" placeholder="e.g. 110" required><small>mg/dL</small></span>
               </label>
@@ -63,6 +72,16 @@
               <label class="field">
                 <span>Age <b>*</b></span>
                 <span class="input-wrap"><input name="Age" type="number" min="18" max="100" step="1" placeholder="e.g. 42" required><small>years</small></span>
+              </label>
+              <label class="field">
+                <span>Gender <b>*</b></span>
+                <span class="input-wrap">
+                  <select name="Gender" required>
+                    <option value="" selected disabled>Select gender</option>
+                    <option value="female">Female</option>
+                    <option value="male">Male</option>
+                  </select>
+                </span>
               </label>
               <label class="field">
                 <span>Pregnancies <b>*</b></span>
@@ -81,7 +100,7 @@
                 <span class="input-wrap"><input name="DiabetesPedigreeFunction" type="number" min="0" max="3" step="any" placeholder="Leave blank if unknown"><small>index</small></span>
               </label>
             </div>
-            <p class="form-hint">Use measurements obtained by a qualified health professional. Blank optional fields are imputed from training data.</p>
+            <p class="form-hint">Use measurements obtained by a qualified health professional. Blank optional fields are imputed from training data. Gender is recorded for context and is not used by the model; the training cohort included women only.</p>
             <div class="form-actions">
               <button class="submit-button" type="submit" id="submit-button" disabled>
                 <span>Estimate risk</span><span aria-hidden="true">&#8594;</span>
@@ -111,6 +130,7 @@
             <div class="score-track" role="img" aria-label="Estimated probability" id="score-track"><span id="score-fill"></span></div>
             <div class="scale-labels"><span>0%</span><span>50% model threshold</span><span>100%</span></div>
             <p class="result-caveat" id="result-caveat"></p>
+            <p class="result-caveat" id="record-save-status" role="status"></p>
             <div class="local-explanation">
               <div class="subheading-row"><h3>Input sensitivity</h3><span>vs. training median</span></div>
               <p class="explanation-note">Change in model estimate when one input is replaced with its training-set median. This is not a causal effect.</p>
@@ -118,6 +138,30 @@
             </div>
           </div>
         </section>
+      </section>
+
+      <section class="records-section" id="patient-records" aria-labelledby="records-title">
+        <div class="section-heading compact-heading">
+          <div><p class="eyebrow">SAVED CHECKUPS</p><h2 id="records-title">Patient records</h2></div>
+          {% if session.get('owner_authenticated') %}
+          <div class="records-tools">
+            <input class="record-search" id="record-search" type="search" placeholder="Find patient by name" aria-label="Filter patient records by name">
+            <button class="refresh-button" id="refresh-records" type="button">Refresh records</button>
+          </div>
+          {% endif %}
+        </div>
+        {% if session.get('owner_authenticated') %}
+        <p class="table-note" id="records-status" role="status">Loading saved records...</p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Patient</th><th>Date</th><th>Gender</th><th>Age</th><th>Glucose</th><th>BMI</th><th>Estimate</th><th>Probability</th></tr></thead>
+            <tbody id="patient-records-body"><tr><td colspan="8" class="table-empty">Loading records...</td></tr></tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="table-note">Patient records are private. Owner sign-in is required to view them.</p>
+        <a class="refresh-button" href="{{ url_for('owner_access') }}">Sign in to view records</a>
+        {% endif %}
       </section>
 
       <section class="analysis-section" aria-label="Model analysis">

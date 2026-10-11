@@ -3,6 +3,29 @@ const submitButton = document.querySelector("#submit-button");
 const formError = document.querySelector("#form-error");
 const modelStatus = document.querySelector("#model-status");
 const modelStatusText = document.querySelector("#model-status-text");
+const resultPanel = document.querySelector(".result-panel");
+const resultEmpty = document.querySelector("#result-empty");
+const resultContent = document.querySelector("#result-content");
+
+function updateResultSectionVisibility() {
+  const requiredFields = form.querySelectorAll("input[required], select[required]");
+  const allRequiredFilled = Array.from(requiredFields).every((field) => {
+    if (field.tagName === "SELECT") {
+      return field.value !== "";
+    }
+    return field.value.trim() !== "";
+  });
+
+  if (!allRequiredFilled) {
+    resultPanel.hidden = true;
+    return;
+  }
+
+  resultPanel.hidden = false;
+  resultEmpty.hidden = false;
+  resultContent.hidden = true;
+  document.querySelector("#result-empty p").textContent = "All required fields are complete. Press Estimate risk to open the model output.";
+}
 
 function showModelUnavailable(message) {
   modelStatus.classList.add("error");
@@ -59,11 +82,98 @@ async function loadModelInfo() {
     modelStatusText.textContent = "Model ready";
     document.querySelector("#selected-model-chip").textContent = info.selected_model;
     submitButton.disabled = false;
+    updateResultSectionVisibility();
   } catch (error) {
     showModelUnavailable(error.message);
     document.querySelector("#selected-model-chip").textContent = "Train required";
+    resultPanel.hidden = true;
   }
 }
+
+let patientRecords = [];
+
+function renderPatientRecords() {
+  const body = document.querySelector("#patient-records-body");
+  const status = document.querySelector("#records-status");
+  const query = document.querySelector("#record-search").value.trim().toLocaleLowerCase();
+  const matchingRecords = patientRecords.filter((record) => record.patient_name.toLocaleLowerCase().includes(query));
+  body.replaceChildren();
+  if (matchingRecords.length === 0) {
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = 8;
+    cell.className = "table-empty";
+    cell.textContent = query ? "No patient records match that name." : "No patient checkups have been saved yet.";
+    row.append(cell);
+    body.append(row);
+  } else {
+    for (const record of matchingRecords) {
+      const row = document.createElement("tr");
+      const date = new Date(record.created_at);
+      const values = [
+        record.patient_name,
+        Number.isNaN(date.getTime()) ? record.created_at : date.toLocaleString(),
+        record.gender,
+        record.age ?? "-",
+        record.glucose ?? "-",
+        record.bmi ?? "-",
+        record.prediction === 1 || record.prediction === "1" ? "Above threshold" : "Below threshold",
+        `${(Number(record.probability) * 100).toFixed(1)}%`,
+      ];
+      for (const value of values) {
+        const cell = document.createElement("td");
+        cell.textContent = value;
+        row.append(cell);
+      }
+      body.append(row);
+    }
+  }
+  status.textContent = query
+    ? `Showing ${matchingRecords.length} of ${patientRecords.length} saved checkups.`
+    : `${patientRecords.length} saved checkup${patientRecords.length === 1 ? "" : "s"}.`;
+}
+
+async function loadPatientRecords() {
+  const body = document.querySelector("#patient-records-body");
+  const status = document.querySelector("#records-status");
+  if (!body || !status) return;
+  status.textContent = "Loading saved records...";
+  try {
+    const response = await fetch("/api/patient-records");
+    const records = await response.json();
+    if (!response.ok) {
+      if (records.login_url) {
+        status.textContent = records.error;
+        const link = document.createElement("a");
+        link.href = records.login_url;
+        link.textContent = " Owner sign in";
+        status.append(link);
+        return;
+      }
+      throw new Error(records.error || "Could not load patient records.");
+    }
+    patientRecords = records;
+    renderPatientRecords();
+  } catch (error) {
+    body.replaceChildren();
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = 8;
+    cell.className = "table-empty";
+    cell.textContent = error.message;
+    row.append(cell);
+    body.append(row);
+    status.textContent = "Records could not be loaded.";
+  }
+}
+
+document.querySelector("#refresh-records").addEventListener("click", loadPatientRecords);
+document.querySelector("#record-search").addEventListener("input", renderPatientRecords);
+
+form.querySelectorAll("input, select").forEach((field) => {
+  field.addEventListener("input", updateResultSectionVisibility);
+  field.addEventListener("change", updateResultSectionVisibility);
+});
 
 function renderExplanation(items) {
   const list = document.querySelector("#sensitivity-list");
@@ -104,6 +214,7 @@ form.addEventListener("submit", async (event) => {
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || "Prediction failed.");
     const percent = result.probability * 100;
+    resultPanel.hidden = false;
     document.querySelector("#result-empty").hidden = true;
     document.querySelector("#result-content").hidden = false;
     document.querySelector("#score-value").textContent = `${percent.toFixed(1)}%`;
@@ -115,6 +226,8 @@ form.addEventListener("submit", async (event) => {
     document.querySelector("#result-caveat").textContent = result.missing_measurements.length
       ? `Missing ${result.missing_measurements.map((name) => name.replace(/([A-Z])/g, " $1").trim().toLowerCase()).join(", ")} was imputed. Probability is not calibrated for clinical use.`
       : "Probability is not calibrated for clinical use. The 0.50 classification threshold is a prototype setting, not a clinical cutoff.";
+    document.querySelector("#record-save-status").textContent = `Patient record saved (ID ${result.record_id}) in patient_records.db.`;
+    await loadPatientRecords();
     document.querySelector("#selected-model-chip").textContent = result.selected_model;
     renderExplanation(result.explanation);
   } catch (error) {
@@ -126,3 +239,4 @@ form.addEventListener("submit", async (event) => {
 });
 
 loadModelInfo();
+loadPatientRecords();
