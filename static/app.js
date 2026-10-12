@@ -167,8 +167,8 @@ async function loadPatientRecords() {
   }
 }
 
-document.querySelector("#refresh-records").addEventListener("click", loadPatientRecords);
-document.querySelector("#record-search").addEventListener("input", renderPatientRecords);
+document.querySelector("#refresh-records")?.addEventListener("click", loadPatientRecords);
+document.querySelector("#record-search")?.addEventListener("input", renderPatientRecords);
 
 form.querySelectorAll("input, select").forEach((field) => {
   field.addEventListener("input", updateResultSectionVisibility);
